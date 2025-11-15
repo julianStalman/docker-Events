@@ -12,7 +12,7 @@ class Ticket(Base):
     price = Column(Float, nullable=False)
     status = Column(Enum(TicketStatus), default=TicketStatus.AVAILABLE, nullable=False)
     event_id = Column(Integer, ForeignKey("events.id"), nullable=False)
-    buyer_id = Column(Integer, ForeignKey("users.id"), nullable=True)
+    user_id = Column(Integer, ForeignKey("users.id"), nullable=True)
     is_purchased = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, nullable=True)
