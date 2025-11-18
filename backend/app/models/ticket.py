@@ -2,7 +2,8 @@ from sqlalchemy import Column, Integer, String, Float, DateTime, Boolean, Foreig
 from sqlalchemy.orm import relationship
 from app.database.session import Base
 from datetime import datetime
-from enums.TicketStatus import TicketStatus
+from app.enum.TicketStatus import TicketStatus
+
 
 class Ticket(Base):
     __tablename__ = "tickets"
@@ -17,5 +18,6 @@ class Ticket(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, nullable=True)
 
-    event = relationship("Event", back_populates="tickets")
-    buyer = relationship("User", back_populates="tickets")
+    event = relationship("Event", back_populates="tickets", lazy="joined")
+    user = relationship("User", back_populates="tickets", lazy="joined")
+

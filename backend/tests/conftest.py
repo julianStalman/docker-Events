@@ -3,16 +3,18 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from fastapi.testclient import TestClient
 from app.database.session import Base
-from app.api.deps import get_db, get_current_user
-from app.models.user import User
+from app.api.deps import get_db
 from app.main import app
-from datetime import datetime
+from app.core.security import get_password_hash
 from passlib.context import CryptContext
+from datetime import datetime
 
-SQLALCHEMY_DATABASE_URL = "sqlite:///test.db"
-ALGORITHM = "HS256"
+from app.models.user import User
+from app.models.ticket import Ticket
+from app.models.event import Event  
+
+SQLALCHEMY_DATABASE_URL = "sqlite:///./test.db"  # Test database URL
 engine = create_engine(SQLALCHEMY_DATABASE_URL, connect_args={"check_same_thread": False})
-
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -22,45 +24,45 @@ def hash_password(password: str) -> str:
 
 @pytest.fixture(scope="function")
 def db():
-    """Creates a new database session and ensures tables exist."""
-    Base.metadata.create_all(bind=engine)  
+    """Fixture to provide a database session for tests."""
+    # Create the database tables
+    Base.metadata.create_all(bind=engine)
     session = TestingSessionLocal()
     try:
-        yield session  
+        yield session
     finally:
-        session.rollback()
         session.close()
-        #Base.metadata.drop_all(bind=engine)  
-
-@pytest.fixture(scope="function")
-def client(db):
-    """Provides a FastAPI test client using the same session as the test."""
-    
-    def override_get_db():
-        Base.metadata.create_all(bind=engine) 
-        yield db
-
-    app.dependency_overrides[get_db] = override_get_db
-    return TestClient(app)
-
+        # Drop the database tables after the test
+        Base.metadata.drop_all(bind=engine)
 
 @pytest.fixture
-def test_superuser(db):
-    """Creates a superuser in the test database."""
-    user = User(username="superuser", email="superuser@example.com", hashed_password=hash_password("Kennwort1"), is_superuser=True, created_at=datetime.now())
+def test_user(db):
+    """Fixture to create a test user in the database."""
+    hashed_password = get_password_hash("password123")
+    user = User(
+        email="testuser@example.com",
+        name="Test User",
+        hashed_password=hashed_password,
+        role="user",
+    )
     db.add(user)
     db.commit()
     db.refresh(user)
     return user
 
+
 @pytest.fixture
-def client_with_superuser(client, test_superuser):
-    """Override `get_current_active_superuser` to return an admin user."""
-    def override_get_current_user():
-        return test_superuser  
-    
-    app.dependency_overrides[get_current_user] = override_get_current_user
-    return client
-
-
-
+def test_event(db):
+    event = Event(
+        title="Test Event",
+        description="This is a test event.",
+        location="Test Location",
+        event_date=datetime.utcnow(),
+        total_tickets=100,
+        available_tickets=100,
+    )
+    db.add(event)
+    db.commit()
+    db.refresh(event)
+    print(f"Test Event ID: {event.id}") 
+    return event

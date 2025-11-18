@@ -1,8 +1,8 @@
-from sqlalchemy import Column, Integer, String, DateTime, Boolean, Enum
+from sqlalchemy import Column, Integer, String, DateTime, Enum
 from sqlalchemy.orm import relationship
 from app.database.session import Base
 from datetime import datetime
-from enums.UserRole import UserRole
+from app.enum.UserRole import UserRole
 
 
 class User(Base):
@@ -16,4 +16,4 @@ class User(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, nullable=True)
 
-    tickets = relationship("Ticket", back_populates="buyer", uselist=True)
+    tickets = relationship("Ticket", back_populates="user", uselist=True, lazy="select", cascade="all, delete-orphan")

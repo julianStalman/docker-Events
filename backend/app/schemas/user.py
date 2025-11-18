@@ -1,8 +1,7 @@
 from datetime import datetime
 from pydantic import BaseModel, EmailStr, Field
 from typing import Optional
-from enums.UserRole import UserRole
-
+from app.enum.UserRole import UserRole
 
 class UserBase(BaseModel):
     email: EmailStr = Field(..., min_length=7, max_length=50)

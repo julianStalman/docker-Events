@@ -1,7 +1,7 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean, ForeignKey, relationship
+from sqlalchemy import Column, Integer, String, Text, DateTime, Boolean
+from sqlalchemy.orm import relationship
 from app.database.session import Base
 from datetime import datetime
-
 
 
 class Event(Base):
@@ -17,4 +17,5 @@ class Event(Base):
     created_at = Column(DateTime, default=datetime.utcnow, nullable=False)
     updated_at = Column(DateTime, nullable=True)
 
-    tickets = relationship("Ticket", back_populates="event")
+    tickets = relationship("Ticket", back_populates="event", lazy="select", cascade="all, delete-orphan")
+

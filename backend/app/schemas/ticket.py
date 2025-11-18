@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 from datetime import datetime
 from typing import Optional
-from enums.TicketStatus import TicketStatus
+from app.enum.TicketStatus import TicketStatus
 
 class TicketBase(BaseModel):
     ticket_number: str

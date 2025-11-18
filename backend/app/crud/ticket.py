@@ -3,7 +3,7 @@ from datetime import datetime, timezone
 
 from app.models.ticket import Ticket
 from app.schemas.ticket import TicketCreate
-from enums.TicketStatus import TicketStatus
+from app.enum.TicketStatus import TicketStatus
 from app.schemas.ticket import TicketCreate, TicketUpdate
 
 

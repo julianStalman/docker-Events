@@ -4,7 +4,7 @@ from datetime import datetime, timezone
 from app.models.user import User
 from app.schemas.user import UserCreate
 from app.core.security import get_password_hash, verify_password
-from enums.UserRole import UserRole
+from app.enum.UserRole import UserRole
 
 
 def create_user(*, db: Session, user: UserCreate):
