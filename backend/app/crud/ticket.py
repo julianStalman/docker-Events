@@ -13,8 +13,8 @@ def create_ticket(*, db: Session, ticket: TicketCreate):
         ticket_number = ticket.ticket_number, 
         price = ticket.price,
         status = ticket.status,
-       
-       
+        event_id = ticket.event_id,
+        user_id=ticket.user_id, 
         created_at=datetime.now(timezone.utc),
         updated_at=None,
     )

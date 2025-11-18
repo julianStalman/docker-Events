@@ -11,6 +11,7 @@ class TicketBase(BaseModel):
 
 class TicketCreate(TicketBase):
     event_id: int
+    user_id: Optional[int] = None
 
 
 class TicketUpdate(BaseModel):
