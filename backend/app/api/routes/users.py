@@ -8,13 +8,13 @@ from app.crud.user import (
     authenticate_user,
 )
 from app.schemas.user import User, UserCreate
-from app.api.deps import SessionDep
+from app.api.deps import SessionDep, get_current_admin
 
 
 router = APIRouter(prefix="/users", tags=["users"])
 
 
-@router.post("/register", response_model=User)
+@router.post("/register", response_model=User, dependencies=[Depends(get_current_admin)])
 def register_user(db: SessionDep, user: UserCreate):
     existing_user = get_user_by_email(db=db, email=user.email)
     if existing_user:

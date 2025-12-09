@@ -66,3 +66,12 @@ def test_event(db):
     db.refresh(event)
     print(f"Test Event ID: {event.id}") 
     return event
+
+@pytest.fixture
+def test_event_data():
+    return {
+        "title": "Test Event",
+        "description": "This is a test event.",
+        "date": "2023-10-01",
+        "location": "Test Location",
+    }
