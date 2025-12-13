@@ -16,10 +16,12 @@ from sqlalchemy.orm import Session
 
 from app.database.session import Base, engine
 from app.models.user import User
+from app.models.event import Event
+from app.models.ticket import Ticket
 from app.schemas.user import UserCreate
 from app.crud.user import create_user
 from app.core.config import settings
-from enums.UserRole import UserRole
+from app.enums.UserRole import UserRole
 
 
 def init_db(session: Session) -> None:

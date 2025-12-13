@@ -113,23 +113,23 @@ def test_delete_ticket(db, test_event):
     fetched_ticket = get_ticket_by_id(db=db, ticket_id=created_ticket.id)
     assert fetched_ticket is None
 
-def test_create_ticket_with_user_and_get_by_user_id(db, test_event, test_user):
+def test_create_ticket_with_user_and_get_by_user_id(db, test_event, test_admin):
 
-    print(f"testuser:{test_user.id}")
+    print(f"testuser:{test_admin.id}")
     ticket_data = TicketCreate(
         ticket_number="TICKET125",
         price=100.0,
         status=TicketStatus.AVAILABLE,
         event_id=test_event.id,
-        user_id=test_user.id, 
+        user_id=test_admin.id, 
     )
     created_ticket = create_ticket(db=db, ticket=ticket_data)
 
-    results = get_tickets_by_user_id(db=db, user_id=test_user.id)
+    results = get_tickets_by_user_id(db=db, user_id=test_admin.id)
 
     assert len(results) == 1
     assert results[0].id == created_ticket.id
-    assert results[0].user_id == test_user.id
+    assert results[0].user_id == test_admin.id
     assert results[0].event_id == test_event.id
     assert results[0].ticket_number == "TICKET125"
     assert results[0].price == 100.0

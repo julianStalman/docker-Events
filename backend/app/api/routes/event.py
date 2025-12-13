@@ -8,12 +8,12 @@ from app.crud.event import (
     delete_event,
 )
 from app.schemas.event import Event, EventCreate, EventUpdate
-from app.api.deps import SessionDep, get_current_organizer
+from app.api.deps import SessionDep, get_current_organizer, get_current_admin
 
 router = APIRouter(prefix="/events", tags=["events"])
 
 
-@router.post("/", response_model=Event, dependencies=[Depends(get_current_organizer)])
+@router.post("/", response_model=Event, dependencies=[Depends(get_current_admin)])
 def create_new_event(db: SessionDep, event: EventCreate):
     return create_event(db=db, event=event)
 

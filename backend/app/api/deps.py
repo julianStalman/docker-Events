@@ -102,7 +102,7 @@ def get_current_admin(current_user: CurrentUser) -> User:
 
 def get_current_organizer(current_user: CurrentUser) -> User:
 
-    if current_user.role != UserRole.ORGANIZER:
+    if current_user.role != UserRole.ORGANIZER or current_user.role != UserRole.ADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="The user doesn't have enough privileges to access this resource",

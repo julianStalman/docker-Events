@@ -7,12 +7,16 @@ from sqlalchemy import engine_from_config, pool
 from app.database.session import Base  # SQLAlchemy Base
 from app.core.config import settings
 
-from app.models import user
+from app.models.user import User
+from app.models.event import Event
+from app.models.ticket import Ticket
+  # Import all models here
+# Add other models if necessary, e.g., from app.models import post, comment
+
+target_metadata = Base.metadata  # Ensure metadata includes all models
 
 config = context.config
 fileConfig(config.config_file_name)
-
-target_metadata = Base.metadata  # SQLAlchemy metadata
 
 def get_url():
     return str(settings.SQLALCHEMY_DATABASE_URI)

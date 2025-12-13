@@ -28,12 +28,12 @@ def test_create_user(db):
     assert result.role == "user"
 
 
-def test_get_user(db, test_user):
-    result = get_user(db=db, user_id=test_user.id)
+def test_get_user(db, test_admin):
+    result = get_user(db=db, user_id=test_admin.id)
 
-    assert result.id == test_user.id
-    assert result.email == test_user.email
-    assert result.name == test_user.name
+    assert result.id == test_admin.id
+    assert result.email == test_admin.email
+    assert result.name == test_admin.name
 
 
 def test_get_user_not_found(db):
@@ -41,24 +41,24 @@ def test_get_user_not_found(db):
     assert result is None
 
 
-def test_get_users(db, test_user):
+def test_get_users(db, test_admin):
     result = get_users(db=db)
 
-    assert any(user.id == test_user.id for user in result)
+    assert any(user.id == test_admin.id for user in result)
 
 
-def test_authenticate_user(db, test_user):
+def test_authenticate_user(db, test_admin):
     result = authenticate_user(
-        db=db, email=test_user.email, password="password123"
+        db=db, email=test_admin.email, password="password123"
     )
 
-    assert result.id == test_user.id
-    assert result.email == test_user.email
+    assert result.id == test_admin.id
+    assert result.email == test_admin.email
 
 
-def test_authenticate_user_invalid_password(db, test_user):
+def test_authenticate_user_invalid_password(db, test_admin):
     result = authenticate_user(
-        db=db, email=test_user.email, password="wrongpassword"
+        db=db, email=test_admin.email, password="wrongpassword"
     )
 
     assert result is None
@@ -72,11 +72,11 @@ def test_authenticate_user_not_found(db):
     assert result is None
 
 
-def test_get_user_by_email(db, test_user):
-    result = get_user_by_email(db=db, email=test_user.email)
+def test_get_user_by_email(db, test_admin):
+    result = get_user_by_email(db=db, email=test_admin.email)
 
-    assert result.id == test_user.id
-    assert result.email == test_user.email
+    assert result.id == test_admin.id
+    assert result.email == test_admin.email
 
 
 def test_get_user_by_email_not_found(db):

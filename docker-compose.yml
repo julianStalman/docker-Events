@@ -63,6 +63,7 @@ services:
       - ./backend/tests:/app/tests
       - ./backend/scripts:/app/scripts
       - ./backend/alembic:/app/alembic
+      - ./backend/alembic.ini:/app/alembic.ini
 
     labels:
       - traefik.enable=true
@@ -133,6 +134,7 @@ services:
       - ./frontend/components.json:/config/workspace/frontend/components.json:ro
       - ./frontend/tsconfig.json:/config/workspace/frontend/tsconfig.json:ro
       - ./frontend/lib:/config/workspace/frontend/lib:ro
+      - ./backend/alembic.ini:/config/workspace/backend/alembic.ini
       
       # Mount log files from host so code-server can view them
       - ./logs/backend.log:/config/workspace/logs/backend.log
