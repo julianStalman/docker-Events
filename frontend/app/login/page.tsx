@@ -1,25 +1,55 @@
 'use client'
 
 import { useState } from 'react'
+import axios from 'axios'
+import { useRouter } from 'next/navigation'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
+
+import api from '../../lib/api'
+
+
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const router = useRouter()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
+    setError('')
 
-    // Simulate login logic
-    setTimeout(() => {
-      console.log({ email, password })
+    try {
+      const formData = new URLSearchParams()
+      formData.append('username', email)
+      formData.append('password', password)
+
+      const response = await api.post('/login', formData, {
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+      })
+
+
+      const { access_token } = response.data
+
+      localStorage.setItem('token', access_token)
+
+      router.push('/')
+
+    } catch (err: any) {
+      if (err.response?.status === 401) {
+        setError('Invalid email or password')
+      } else {
+        setError('Something went wrong. Please try again.')
+      }
+    } finally {
       setLoading(false)
-      alert('Logged in!')
-    }, 1000)
+    }
   }
 
   return (
@@ -30,6 +60,10 @@ export default function LoginPage() {
       >
         <h2 className="text-2xl font-semibold text-center">Login</h2>
 
+        {error && (
+          <p className="text-sm text-red-600 text-center">{error}</p>
+        )}
+
         <div className="space-y-2">
           <Label htmlFor="email">Email</Label>
           <Input
@@ -39,6 +73,7 @@ export default function LoginPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            disabled={loading}
           />
         </div>
 
@@ -51,6 +86,7 @@ export default function LoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            disabled={loading}
           />
         </div>
 
