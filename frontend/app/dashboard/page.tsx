@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import axios from 'axios'
+import api from '@/lib/api'
 import { Input } from '@/components/ui/input'
 import {
   Table,
@@ -12,10 +12,8 @@ import {
   TableRow,
 } from '@/components/ui/table'
 
-
 import {
   Dialog,
-  DialogTrigger,
   DialogContent,
   DialogHeader,
   DialogTitle,
@@ -24,63 +22,73 @@ import {
 
 import { Button } from '@/components/ui/button'
 
-
-interface User {
-  id: number
-  username: string
-  email: string
+interface Event {
+  id: number
+  title: string
+  location: string
+  event_date: string
+  available_tickets: number
+  total_tickets: number
 }
 
 export default function DashboardPage() {
   const [search, setSearch] = useState('')
-  const [users, setUsers] = useState<User[]>([])
+  const [events, setEvents] = useState<Event[]>([])
   const [loading, setLoading] = useState(true)
 
-  const [selectedUser, setSelectedUser] = useState<User>();
-  const [open, setOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<Event>()
+  const [open, setOpen] = useState(false)
 
-  const openDialog = (user: User) => {
-    setSelectedUser({ ...user });
-    setOpen(true);
-  };
+  const openDialog = (event: Event) => {
+    setSelectedEvent({ ...event })
+    setOpen(true)
+  }
 
   const handleSave = () => {
-    if (!selectedUser) return;
-    setUsers((prev) =>
-      prev.map((u) => (u.id === selectedUser.id ? selectedUser : u))
-    );
-    setOpen(false);
-  };
+    if (!selectedEvent) return
+    setEvents((prev) =>
+      prev.map((e) => (e.id === selectedEvent.id ? selectedEvent : e))
+    )
+    setOpen(false)
+  }
 
-
-  const filteredData = users.filter((item) =>
-    item.username.toLowerCase().includes(search.toLowerCase()) ||
-    item.email.toLowerCase().includes(search.toLowerCase())
+  const filteredData = events.filter((item) =>
+    item.title.toLowerCase().includes(search.toLowerCase()) ||
+    item.location.toLowerCase().includes(search.toLowerCase())
   )
 
+  useEffect(() => {
+    const fetchEvents = async () => {
+      const token = localStorage.getItem('token')
+      if (!token) {
+        console.error('No token found')
+        setLoading(false)
+        return
+      }
 
-useEffect(() => {
-    const fetchUsers = async () => {
-      try {
-        const { data } = await axios.get<User[]>('http://localhost/api/users/')
-        setUsers(data)
-      } catch (error) {
-        console.error('Error fetching users:', error)
-      } finally {
-        setLoading(false)
-      }
-    }
+      try {
+        const { data } = await api.get<Event[]>('/events/', {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        })
+        setEvents(data)
+      } catch (error) {
+        console.error('Error fetching events:', error)
+      } finally {
+        setLoading(false)
+      }
+    }
 
-    fetchUsers()
-  }, [])
-
+    fetchEvents()
+  }, [])
 
   return (
     <div className="p-6 space-y-6">
-      <h1 className="text-2xl font-bold">Dashboard</h1>
+      <h1 className="text-2xl font-bold">Events Dashboard</h1>
 
       <Input
-        placeholder="Search by name or email..."
+        placeholder="Search by title or location..."
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         className="max-w-sm"
@@ -90,46 +98,49 @@ useEffect(() => {
         <Table>
           <TableHeader className="bg-gray-100">
             <TableRow>
-              <TableHead className="text-gray-700">ID</TableHead>
-              <TableHead className="text-gray-700">Name</TableHead>
-              <TableHead className="text-gray-700">Email</TableHead>
+              <TableHead className="text-gray-700">Title</TableHead>
+              <TableHead className="text-gray-700">Location</TableHead>
+              <TableHead className="text-gray-700">Date</TableHead>
+              <TableHead className="text-gray-700">Available Tickets</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
-            {users.map((user, index) => (
-                <TableRow
-                key={user.id}
+            {filteredData.map((event, index) => (
+              <TableRow
+                key={event.id}
                 className={index % 2 === 0 ? 'bg-white' : 'bg-gray-50 cursor-pointer'}
-                onClick={() => openDialog(user)}
-                >
-                <TableCell>{user.id}</TableCell>
-                <TableCell>{user.username}</TableCell>
-                <TableCell>{user.email}</TableCell>
+                onClick={() => openDialog(event)}
+              >
+                <TableCell>{event.title}</TableCell>
+                <TableCell>{event.location}</TableCell>
+                <TableCell>{new Date(event.event_date).toLocaleString()}</TableCell>
+                <TableCell>{event.available_tickets} / {event.total_tickets}</TableCell>
               </TableRow>
             ))}
           </TableBody>
         </Table>
       </div>
+
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>Edit User</DialogTitle>
+            <DialogTitle>Edit Event</DialogTitle>
           </DialogHeader>
-          {selectedUser && (
+          {selectedEvent && (
             <div className="space-y-4 mt-4">
               <Input
-                value={selectedUser.username}
+                value={selectedEvent.title}
                 onChange={(e) =>
-                  setSelectedUser({ ...selectedUser, username: e.target.value })
+                  setSelectedEvent({ ...selectedEvent, title: e.target.value })
                 }
-                placeholder="Username"
+                placeholder="Title"
               />
               <Input
-                value={selectedUser.email}
+                value={selectedEvent.location}
                 onChange={(e) =>
-                  setSelectedUser({ ...selectedUser, email: e.target.value })
+                  setSelectedEvent({ ...selectedEvent, location: e.target.value })
                 }
-                placeholder="Email"
+                placeholder="Location"
               />
             </div>
           )}

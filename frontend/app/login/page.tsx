@@ -39,7 +39,7 @@ export default function LoginPage() {
 
       localStorage.setItem('token', access_token)
 
-      router.push('/')
+      router.push('/dashboard')
 
     } catch (err: any) {
       if (err.response?.status === 401) {
