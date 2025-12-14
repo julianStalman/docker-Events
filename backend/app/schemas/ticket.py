@@ -14,7 +14,11 @@ class TicketCreate(TicketBase):
     user_id: Optional[int] = None
 
 
-class TicketUpdate(BaseModel):
+class TicketBuy(BaseModel):  # New schema for buying a ticket
+    user_id: int
+
+
+class TicketUpdateDetails(BaseModel):  # New schema for updating ticket details
     price: Optional[float] = None
     status: Optional[TicketStatus] = None
 

@@ -55,6 +55,25 @@ def create_test_user(db, username: str, email: str, role: UserRole):
 def test_admin(db):
     return create_test_user(db, username="superuser", email="superuser@example.com", role=UserRole.admin)
 
+@pytest.fixture
+def test_user(client_with_admin):
+    user_data = {
+        "email": "testuser@example.com",
+        "name": "Test User",
+        "password": "securepassword",
+        "role": "user",
+    }
+    response = client_with_admin.post("/users/register", json=user_data)
+    if response.status_code == 400:
+        existing_user_response = client_with_admin.get("/users/")
+        existing_user = next(
+            (user for user in existing_user_response.json() if user["email"] == user_data["email"]), None
+        )
+        assert existing_user is not None
+        return existing_user
+    assert response.status_code == 200
+    return response.json()
+
 
 @pytest.fixture
 def test_admin(db):

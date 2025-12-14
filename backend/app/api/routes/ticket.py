@@ -5,10 +5,11 @@ from app.crud.ticket import (
     get_ticket_by_id,
     get_tickets_by_event_id,
     get_tickets_by_user_id,
-    update_ticket,
+    update_ticket_details,
+    buy_ticket,
     delete_ticket,
 )
-from app.schemas.ticket import Ticket, TicketCreate, TicketUpdate
+from app.schemas.ticket import Ticket, TicketCreate, TicketBuy, TicketUpdateDetails
 from app.api.deps import SessionDep
 
 router = APIRouter(prefix="/tickets", tags=["tickets"])
@@ -16,7 +17,13 @@ router = APIRouter(prefix="/tickets", tags=["tickets"])
 
 @router.post("/", response_model=Ticket)
 def create_new_ticket(db: SessionDep, ticket: TicketCreate):
-    return create_ticket(db=db, ticket=ticket)
+    try:
+        return create_ticket(db=db, ticket=ticket)
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An error occurred while creating the ticket: {str(e)}",
+        )
 
 
 @router.get("/{ticket_id}", response_model=Ticket)
@@ -52,23 +59,63 @@ def get_tickets_for_user(db: SessionDep, user_id: int):
     return tickets
 
 
-@router.put("/{ticket_id}", response_model=Ticket)
-def update_existing_ticket(db: SessionDep, ticket_id: int, ticket_update: TicketUpdate):
-    updated_ticket = update_ticket(db=db, ticket_id=ticket_id, ticket_update=ticket_update)
-    if not updated_ticket:
+@router.put("/{ticket_id}/buy", response_model=Ticket)
+def buy_ticket_route(db: SessionDep, ticket_id: int, ticket_buy: TicketBuy):
+    """
+    Buy a ticket by assigning a user_id to it.
+    """
+    try:
+        updated_ticket = buy_ticket(db=db, ticket_id=ticket_id, user_id=ticket_buy.user_id)
+        if not updated_ticket:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Ticket is not available or does not exist.",
+            )
+        return updated_ticket
+    except ValueError as e:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Ticket not found.",
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail=str(e),
         )
-    return updated_ticket
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An unexpected error occurred: {str(e)}",
+        )
+
+
+@router.put("/{ticket_id}/details", response_model=Ticket)
+def update_ticket_details_route(db: SessionDep, ticket_id: int, ticket_update: TicketUpdateDetails):
+    """
+    Update ticket details such as price and status.
+    """
+    try:
+        updated_ticket = update_ticket_details(db=db, ticket_id=ticket_id, ticket_update=ticket_update)
+        if not updated_ticket:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Ticket not found.",
+            )
+        return updated_ticket
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An error occurred while updating the ticket: {str(e)}",
+        )
 
 
 @router.delete("/{ticket_id}", response_model=Ticket)
 def delete_existing_ticket(db: SessionDep, ticket_id: int):
-    deleted_ticket = delete_ticket(db=db, ticket_id=ticket_id)
-    if not deleted_ticket:
+    try:
+        deleted_ticket = delete_ticket(db=db, ticket_id=ticket_id)
+        if not deleted_ticket:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Ticket not found.",
+            )
+        return deleted_ticket
+    except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Ticket not found.",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"An error occurred while deleting the ticket: {str(e)}",
         )
-    return deleted_ticket

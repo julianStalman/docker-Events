@@ -5,7 +5,14 @@ from app.models.event import Event
 from app.schemas.event import EventCreate, EventUpdate
 
 
-def create_event(*, db: Session, event: EventCreate):
+from sqlalchemy.orm import Session
+from datetime import datetime, timezone
+
+from app.schemas.ticket import TicketCreate 
+from app.crud.ticket import create_ticket  
+
+
+def create_event(*, db: Session, event: EventCreate, ticket_price: float):
 
     db_event = Event(
         title=event.title,
@@ -21,6 +28,16 @@ def create_event(*, db: Session, event: EventCreate):
     db.add(db_event)
     db.commit()
     db.refresh(db_event)
+
+    for ticket_number in range(1, event.total_tickets + 1):
+        ticket_data = TicketCreate(
+            ticket_number=str(ticket_number), 
+            price=ticket_price,
+            status="available",
+            event_id=db_event.id,
+            user_id=None,
+        )
+        create_ticket(db=db, ticket=ticket_data)
 
     return db_event
 

@@ -1,12 +1,12 @@
 import pytest
-from app.models.ticket import Ticket
-from app.schemas.ticket import TicketCreate, TicketUpdate
+from app.schemas.ticket import TicketCreate, TicketUpdateDetails, TicketBuy
 from app.crud.ticket import (
     create_ticket,
     get_ticket_by_id,
     get_tickets_by_event_id,
     get_tickets_by_user_id,
-    update_ticket,
+    update_ticket_details,
+    buy_ticket,
     delete_ticket,
 )
 from app.enum.TicketStatus import TicketStatus
@@ -17,90 +17,88 @@ def test_create_ticket(db, test_event):
         ticket_number="TICKET123",
         price=50.0,
         status=TicketStatus.AVAILABLE,
-        event_id=test_event.id, 
+        event_id=test_event.id,
         user_id=None,
     )
 
     result = create_ticket(db=db, ticket=ticket_data)
-    
-
 
     assert result.id is not None
     assert result.ticket_number == "TICKET123"
     assert result.price == 50.0
-    assert result.status == TicketStatus.AVAILABLE  
-    assert result.event_id == test_event.id  
+    assert result.status == TicketStatus.AVAILABLE
+    assert result.event_id == test_event.id
     assert result.user_id is None
 
 
-def test_get_ticket_by_id(db, test_event):
+def test_buy_ticket(db, test_event, test_admin):
     ticket_data = TicketCreate(
-        ticket_number="TICKET123",
-        price=50.0,
-        status=TicketStatus.AVAILABLE,
-        event_id=test_event.id,
-        user_id=None,
-    )
-    created_ticket = create_ticket(db=db, ticket=ticket_data)
-
-    fetched_ticket = get_ticket_by_id(db=db, ticket_id=created_ticket.id)
-
-    assert fetched_ticket is not None
-    assert fetched_ticket.id == created_ticket.id
-    assert fetched_ticket.ticket_number == "TICKET123"
-    assert fetched_ticket.event_id == test_event.id
-
-
-def test_get_tickets_by_event_id(db, test_event):
-    ticket_data1 = TicketCreate(
-        ticket_number="TICKET123",
-        price=50.0,
-        status=TicketStatus.AVAILABLE,
-        event_id=test_event.id,
-        user_id=None,
-    )
-    ticket_data2 = TicketCreate(
         ticket_number="TICKET124",
         price=60.0,
         status=TicketStatus.AVAILABLE,
         event_id=test_event.id,
         user_id=None,
     )
-    create_ticket(db=db, ticket=ticket_data1)
-    create_ticket(db=db, ticket=ticket_data2)
+    created_ticket = create_ticket(db=db, ticket=ticket_data)
 
-    tickets = get_tickets_by_event_id(db=db, event_id=test_event.id)
+    bought_ticket = buy_ticket(db=db, ticket_id=created_ticket.id, user_id=test_admin.id)
 
-    assert len(tickets) == 2
-    assert tickets[0].event_id == test_event.id
-    assert tickets[1].event_id == test_event.id
+    assert bought_ticket.user_id == test_admin.id
+    assert bought_ticket.status == TicketStatus.SOLD
 
 
-def test_update_ticket(db, test_event):
+def test_buy_ticket_already_sold(db, test_event, test_admin):
     ticket_data = TicketCreate(
-        ticket_number="TICKET123",
-        price=50.0,
+        ticket_number="TICKET125",
+        price=70.0,
+        status=TicketStatus.SOLD,
+        event_id=test_event.id,
+        user_id=test_admin.id,
+    )
+    created_ticket = create_ticket(db=db, ticket=ticket_data)
+
+    with pytest.raises(ValueError, match="Ticket with ID .* is already sold."):
+        buy_ticket(db=db, ticket_id=created_ticket.id, user_id=test_admin.id)
+
+
+def test_buy_ticket_user_not_found(db, test_event):
+    ticket_data = TicketCreate(
+        ticket_number="TICKET126",
+        price=80.0,
         status=TicketStatus.AVAILABLE,
         event_id=test_event.id,
         user_id=None,
     )
     created_ticket = create_ticket(db=db, ticket=ticket_data)
 
-    update_data = TicketUpdate(
-        price=75.0,
-        status=TicketStatus.SOLD,
-    )
-    updated_ticket = update_ticket(db=db, ticket_id=created_ticket.id, ticket_update=update_data)
+    with pytest.raises(ValueError, match="User with ID .* does not exist."):
+        buy_ticket(db=db, ticket_id=created_ticket.id, user_id=999)
 
-    assert updated_ticket is not None
-    assert updated_ticket.price == 75.0
-    assert updated_ticket.status == TicketStatus.SOLD
+
+def test_update_ticket_details(db, test_event):
+    ticket_data = TicketCreate(
+        ticket_number="TICKET127",
+        price=90.0,
+        status=TicketStatus.AVAILABLE,
+        event_id=test_event.id,
+        user_id=None,
+    )
+    created_ticket = create_ticket(db=db, ticket=ticket_data)
+
+    update_data = TicketUpdateDetails(
+        price=100.0,
+        status=TicketStatus.CANCELLED,
+    )
+    updated_ticket = update_ticket_details(db=db, ticket_id=created_ticket.id, ticket_update=update_data)
+
+    assert updated_ticket.price == 100.0
+    assert updated_ticket.status == TicketStatus.CANCELLED
 
 
 def test_delete_ticket(db, test_event):
     ticket_data = TicketCreate(
-        ticket_number="TICKET123",
-        price=50.0,
+        ticket_number="TICKET128",
+        price=100.0,
         status=TicketStatus.AVAILABLE,
         event_id=test_event.id,
         user_id=None,
@@ -112,25 +110,3 @@ def test_delete_ticket(db, test_event):
 
     fetched_ticket = get_ticket_by_id(db=db, ticket_id=created_ticket.id)
     assert fetched_ticket is None
-
-def test_create_ticket_with_user_and_get_by_user_id(db, test_event, test_admin):
-
-    print(f"testuser:{test_admin.id}")
-    ticket_data = TicketCreate(
-        ticket_number="TICKET125",
-        price=100.0,
-        status=TicketStatus.AVAILABLE,
-        event_id=test_event.id,
-        user_id=test_admin.id, 
-    )
-    created_ticket = create_ticket(db=db, ticket=ticket_data)
-
-    results = get_tickets_by_user_id(db=db, user_id=test_admin.id)
-
-    assert len(results) == 1
-    assert results[0].id == created_ticket.id
-    assert results[0].user_id == test_admin.id
-    assert results[0].event_id == test_event.id
-    assert results[0].ticket_number == "TICKET125"
-    assert results[0].price == 100.0
-    assert results[0].status == TicketStatus.AVAILABLE

@@ -14,8 +14,19 @@ router = APIRouter(prefix="/events", tags=["events"])
 
 
 @router.post("/", response_model=Event, dependencies=[Depends(get_current_admin)])
-def create_new_event(db: SessionDep, event: EventCreate):
-    return create_event(db=db, event=event)
+def create_new_event(db: SessionDep, event: EventCreate, ticket_price: float):
+    """
+    Create a new event and generate tickets for it.
+
+    Args:
+        db (SessionDep): Database session dependency.
+        event (EventCreate): Event creation schema.
+        ticket_price (float): Price for each ticket.
+
+    Returns:
+        Event: The created event.
+    """
+    return create_event(db=db, event=event, ticket_price=ticket_price)
 
 
 @router.get("/{event_id}", response_model=Event)
