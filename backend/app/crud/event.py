@@ -13,7 +13,18 @@ from app.crud.ticket import create_ticket
 
 
 def create_event(*, db: Session, event: EventCreate, ticket_price: float):
+    """
+    Create a new event and generate tickets for it.
 
+    Args:
+        db (Session): Database session.
+        event (EventCreate): Event creation schema.
+        ticket_price (float): Price for each ticket.
+
+    Returns:
+        Event: The created event.
+    """
+    # Create the event
     db_event = Event(
         title=event.title,
         description=event.description,
@@ -29,9 +40,10 @@ def create_event(*, db: Session, event: EventCreate, ticket_price: float):
     db.commit()
     db.refresh(db_event)
 
+    # Generate tickets with unique ticket numbers
     for ticket_number in range(1, event.total_tickets + 1):
         ticket_data = TicketCreate(
-            ticket_number=str(ticket_number), 
+            ticket_number=f"{db_event.id}-{ticket_number}",  # Ensure uniqueness by including event_id
             price=ticket_price,
             status="available",
             event_id=db_event.id,

@@ -4,6 +4,7 @@ from app.models.user import User
 
 
 from app.models.ticket import Ticket
+from app.models.event import Event
 from app.schemas.ticket import TicketCreate
 from app.enum.TicketStatus import TicketStatus
 from app.schemas.ticket import TicketCreate, TicketBuy, TicketUpdateDetails
@@ -40,16 +41,19 @@ def get_tickets_by_user_id(*, db: Session, user_id: int):
 
 def buy_ticket(*, db: Session, ticket_id: int, user_id: int):
     """
-    Assign a user to a ticket and mark it as SOLD.
+    Assign a user to a ticket, mark it as SOLD, and decrement the available tickets of the event.
     """
+    # Fetch the ticket by ID
     db_ticket = db.query(Ticket).filter(Ticket.id == ticket_id).first()
     if not db_ticket:
         raise ValueError(f"Ticket with ID {ticket_id} does not exist.")
 
+    # Fetch the user by ID
     db_user = db.query(User).filter(User.id == user_id).first()
     if not db_user:
         raise ValueError(f"User with ID {user_id} does not exist.")
 
+    # Validate ticket status
     if db_ticket.status == TicketStatus.SOLD:
         raise ValueError(f"Ticket with ID {ticket_id} is already sold.")
 
@@ -59,12 +63,27 @@ def buy_ticket(*, db: Session, ticket_id: int, user_id: int):
     if db_ticket.status != TicketStatus.AVAILABLE:
         raise ValueError(f"Ticket with ID {ticket_id} is not available for purchase.")
 
+    # Fetch the associated event
+    db_event = db.query(Event).filter(Event.id == db_ticket.event_id).first()
+    if not db_event:
+        raise ValueError(f"Event with ID {db_ticket.event_id} does not exist.")
+
+    # Ensure there are available tickets for the event
+    if db_event.available_tickets <= 0:
+        raise ValueError(f"No available tickets left for Event ID {db_event.id}.")
+
+    # Update the ticket and event
     db_ticket.user_id = user_id
     db_ticket.status = TicketStatus.SOLD
     db_ticket.updated_at = datetime.now(timezone.utc)
 
+    db_event.available_tickets -= 1  # Decrement available tickets
+    db_event.updated_at = datetime.now(timezone.utc)
+
+    # Commit the changes
     db.commit()
     db.refresh(db_ticket)
+    db.refresh(db_event)
 
     return db_ticket
 

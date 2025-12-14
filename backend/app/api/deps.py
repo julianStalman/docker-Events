@@ -17,6 +17,8 @@ from app.schemas.token import TokenData
 from app.schemas.user import User, UserRole
 from app.crud.user import get_user_by_email
 from app.crud.event import get_event_by_id
+from app.models.event import Event
+from app.models.ticket import Ticket
 
 
 
@@ -101,8 +103,7 @@ def get_current_admin(current_user: CurrentUser) -> User:
 
 
 def get_current_organizer(current_user: CurrentUser) -> User:
-
-    if current_user.role != UserRole.ORGANIZER or current_user.role != UserRole.ADMIN:
+    if current_user.role != UserRole.ORGANIZER and current_user.role != UserRole.ADMIN:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="The user doesn't have enough privileges to access this resource",
@@ -110,25 +111,41 @@ def get_current_organizer(current_user: CurrentUser) -> User:
     return current_user
 
 
-def get_current_user_with_event_access(
-    current_user: CurrentUser, event_id: int, session: SessionDep
+def get_current_user_with_ticket_event_access(
+    *,
+    session: SessionDep,
+    ticket_id: int,
+    current_user: CurrentUser,
 ) -> User:
+    ticket = session.query(Ticket).filter(Ticket.id == ticket_id).first()
 
-    event = get_event_by_id(db=session, event_id=event_id)
+    if not ticket:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Ticket not found.",
+        )
+
+    event = session.query(Event).filter(Event.id == ticket.event_id).first()
+
     if not event:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Event not found.",
         )
 
+    if current_user.role == UserRole.ADMIN:
+        return current_user
+
     if (
-        current_user.role == UserRole.ADMIN
-        or (current_user.role == UserRole.ORGANIZER and event.organizer_id == current_user.id)
-        or any(ticket.event_id == event_id for ticket in current_user.tickets)
+        current_user.role == UserRole.ORGANIZER
+        and event.organizer_id == current_user.id
     ):
+        return current_user
+
+    if ticket.user_id == current_user.id:
         return current_user
 
     raise HTTPException(
         status_code=status.HTTP_403_FORBIDDEN,
-        detail="The user doesn't have access to this event.",
+        detail="The user doesn't have access to this ticket.",
     )
