@@ -12,7 +12,6 @@ def test_create_event(client_with_admin):
         "available_tickets": 100,
     }
 
-    # Include ticket_price as a query parameter
     response = client_with_admin.post("/events/?ticket_price=50.0", json=event_data)
     assert response.status_code == 200
     data = response.json()
@@ -25,7 +24,6 @@ def test_create_event(client_with_admin):
 
 
 def test_get_event(client_with_admin):
-    # Create an event first
     event_data = {
         "title": "Sample Event",
         "description": "Sample description.",
@@ -38,7 +36,6 @@ def test_get_event(client_with_admin):
     assert create_response.status_code == 200
     created_event = create_response.json()
 
-    # Fetch the created event
     response = client_with_admin.get(f"/events/{created_event['id']}")
     assert response.status_code == 200
     fetched_event = response.json()
@@ -47,7 +44,6 @@ def test_get_event(client_with_admin):
 
 
 def test_update_event(client_with_admin):
-    # Create an event first
     event_data = {
         "title": "Event to Update",
         "description": "Description before update.",
@@ -60,7 +56,6 @@ def test_update_event(client_with_admin):
     assert create_response.status_code == 200
     created_event = create_response.json()
 
-    # Update the event
     update_data = {"title": "Updated Event Title"}
     update_response = client_with_admin.put(
         f"/events/{created_event['id']}", json=update_data
