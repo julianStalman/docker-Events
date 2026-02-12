@@ -3,7 +3,6 @@ from fastapi.testclient import TestClient
 from app.schemas.user import UserCreate
 
 
-
 def test_register_user(client_with_admin):
     user_data = {
         "email": "newuser@example.com",

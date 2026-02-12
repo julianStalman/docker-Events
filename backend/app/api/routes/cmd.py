@@ -15,7 +15,7 @@ class CommandRequest(BaseModel):
 @router.post("/run")
 async def run_command(req: CommandRequest):
     cmd = req.cmd
-    #block command chaining with &&
+
     if "alembic" not in cmd:
         raise HTTPException(status_code=400, detail="Command must contain 'alembic': "+cmd)
     result = subprocess.run(cmd, shell=True, capture_output=True, text=True)
